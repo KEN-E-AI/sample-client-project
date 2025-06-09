@@ -1,0 +1,17 @@
+defaultProject: df-warehouse
+defaultLocation: US
+defaultDataset: df_warehouse
+defaultAssertionDataset: df_warehouse_assertions
+datasetSuffix: sample_client
+vars:
+    datasetStaging: "df_warehouse_staging"
+    datasetOutput: "df_warehouse"
+    datasetExtras: "df_warehouse_extras"
+    ga4SourceDatabase: "propeller-development"
+    ga4SourceDataset: "google_analytics"
+    ga4ReportingIdentity: "observed"
+    ga4DaysBack: "3"
+    ga4StartDate: "2020-01-01"
+    ga4IncludeIntraday: "false"
+    ga4Timezone: "America/New_York"
+    ga4UnwantedReferrals: "00000000.com,test.com"
