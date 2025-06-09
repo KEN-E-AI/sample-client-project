@@ -1,0 +1,377 @@
+{
+    "tables": [
+        {
+            "type": "table",
+            "target": {
+                "schema": "propeller_dataform_template_sample_client",
+                "name": "_df_stg_partitions",
+                "database": "df-warehouse"
+            },
+            "query": "select * from `df-warehouse.propeller_dataform_template_sample_client.INFORMATION_SCHEMA.PARTITIONS`",
+            "disabled": false,
+            "fileName": "definitions/meta_ads.js",
+            "tags": [
+                "googleads",
+                "daily",
+                "ads",
+                "source",
+                "staging"
+            ],
+            "actionDescriptor": {
+                "description": "TODO"
+            },
+            "hermeticity": "NON_HERMETIC",
+            "canonicalTarget": {
+                "schema": "propeller_dataform_template",
+                "name": "_df_stg_partitions",
+                "database": "df-warehouse"
+            },
+            "enumType": "TABLE"
+        },
+        {
+            "type": "incremental",
+            "target": {
+                "schema": "propeller_dataform_template_sample_client",
+                "name": "stg_meta_ads_insights",
+                "database": "df-warehouse"
+            },
+            "query": "\n  \n  select\n      cpc,\n      cpm,\n      cpp,\n      ctr,\n      ad_id,\n      reach,\n      spend,\n      clicks,\n      actions,\n      ad_name,\n      adset_id,\n      wish_bid,\n      date_stop,\n      frequency,\n      objective,\n      account_id,\n      adset_name,\n      date_start,\n      unique_ctr,\n      auction_bid,\n      buying_type,\n      campaign_id,\n      conversions,\n      impressions,\n      website_ctr,\n      account_name,\n      created_time,\n      social_spend,\n      updated_time as data_date,\n      action_values,\n      campaign_name,\n      purchase_roas,\n      unique_clicks,\n      unique_actions,\n      full_view_reach,\n      outbound_clicks,\n      quality_ranking,\n      account_currency,\n      ad_click_actions,\n      conversion_values,\n      cost_per_ad_click,\n      cost_per_thruplay,\n      optimization_goal,\n      inline_link_clicks,\n      video_play_actions,\n      attribution_setting,\n      cost_per_conversion,\n      outbound_clicks_ctr,\n      canvas_avg_view_time,\n      cost_per_action_type,\n      ad_impression_actions,\n      catalog_segment_value,\n      cost_per_unique_click,\n      full_view_impressions,\n      inline_link_click_ctr,\n      website_purchase_roas,\n      estimated_ad_recallers,\n      inline_post_engagement,\n      unique_link_clicks_ctr,\n      unique_outbound_clicks,\n      auction_competitiveness,\n      canvas_avg_view_percent,\n      catalog_segment_actions,\n      conversion_rate_ranking,\n      converted_product_value,\n      cost_per_outbound_click,\n      engagement_rate_ranking,\n      mobile_app_purchase_roas,\n      video_play_curve_actions,\n      unique_inline_link_clicks,\n      video_p25_watched_actions,\n      video_p50_watched_actions,\n      video_p75_watched_actions,\n      video_p95_watched_actions,\n      auction_max_competitor_bid,\n      converted_product_quantity,\n      cost_per_15_sec_video_view,\n      cost_per_inline_link_click,\n      unique_outbound_clicks_ctr,\n      video_p100_watched_actions,\n      video_time_watched_actions,\n      cost_per_unique_action_type,\n      unique_inline_link_click_ctr,\n      video_15_sec_watched_actions,\n      video_30_sec_watched_actions,\n      cost_per_unique_outbound_click,\n      video_avg_time_watched_actions,\n      cost_per_estimated_ad_recallers,\n      cost_per_inline_post_engagement,\n      cost_per_unique_inline_link_click,\n      instant_experience_clicks_to_open,\n      instant_experience_clicks_to_start,\n      instant_experience_outbound_clicks,\n      video_play_retention_graph_actions,\n      cost_per_2_sec_continuous_video_view,\n      video_play_retention_0_to_15s_actions,\n      video_continuous_2_sec_watched_actions,\n      video_play_retention_20_to_60s_actions,\n      qualifying_question_qualify_answer_rate,\n      catalog_segment_value_omni_purchase_roas,\n      catalog_segment_value_mobile_purchase_roas,\n      catalog_segment_value_website_purchase_roas\n  from\n      `propeller-development.meta_ads.ads_insights`\n  -- When model is run as incremental, update data from starting from the meta ads days back setting in workflow settings yaml\n  where\n      date(_airbyte_extracted_at) > date '2024-01-01'\n",
+            "disabled": false,
+            "protected": false,
+            "preOps": [
+                "\n      \n      -- Set backstop and defaults\n      declare self_checkpoint default (select timestamp(\"2024-01-01\"));\n      declare partitions_to_update\n          array<\n              struct<\n                  site_nm string, \n                  partition_dates array<date>\n              >\n          >;\n      declare log_start_time default (select current_timestamp());\n      \n      -- Get last run time for model *table_name* from INFORMATION_SCHEMA.PARTITIONS\n      set self_checkpoint = (\n          select timestamp(\"2024-01-01\")\n      );\n      \n      -- Iterate through all sources and find partitions from INFORMATION_SCHEMA.PARTITIONS\n      -- that have updated since the last run time.\n      set partitions_to_update = array(\n          select as struct\n              site_nm,\n              array_agg(distinct partition_date ignore nulls) as partition_dates\n          from (\n              \n                  select\n                      \"meta_ads\" as site_nm,\n                      parse_date('%Y%m%d', partition_id) as partition_date\n                  from `propeller-development.meta_ads.INFORMATION_SCHEMA.PARTITIONS`\n                  where\n                    table_name = \"ads_insights\"\n                      -- Subtract 10 minutes to account for the runtime.  TODO log start time.\n                      and last_modified_time > timestamp_sub(self_checkpoint, interval 10 minute)         \n              \n          )\n              group by site_nm\n              having array_length(partition_dates) > 0\n      );\n      \n      "
+            ],
+            "fileName": "definitions/meta_ads.js",
+            "bigquery": {
+                "partitionBy": "data_date"
+            },
+            "tags": [
+                "metaads",
+                "daily",
+                "campaigns",
+                "adsets",
+                "ads",
+                "stg"
+            ],
+            "actionDescriptor": {
+                "description": "Data for each ad."
+            },
+            "incrementalQuery": "\n  \n  select\n      cpc,\n      cpm,\n      cpp,\n      ctr,\n      ad_id,\n      reach,\n      spend,\n      clicks,\n      actions,\n      ad_name,\n      adset_id,\n      wish_bid,\n      date_stop,\n      frequency,\n      objective,\n      account_id,\n      adset_name,\n      date_start,\n      unique_ctr,\n      auction_bid,\n      buying_type,\n      campaign_id,\n      conversions,\n      impressions,\n      website_ctr,\n      account_name,\n      created_time,\n      social_spend,\n      updated_time as data_date,\n      action_values,\n      campaign_name,\n      purchase_roas,\n      unique_clicks,\n      unique_actions,\n      full_view_reach,\n      outbound_clicks,\n      quality_ranking,\n      account_currency,\n      ad_click_actions,\n      conversion_values,\n      cost_per_ad_click,\n      cost_per_thruplay,\n      optimization_goal,\n      inline_link_clicks,\n      video_play_actions,\n      attribution_setting,\n      cost_per_conversion,\n      outbound_clicks_ctr,\n      canvas_avg_view_time,\n      cost_per_action_type,\n      ad_impression_actions,\n      catalog_segment_value,\n      cost_per_unique_click,\n      full_view_impressions,\n      inline_link_click_ctr,\n      website_purchase_roas,\n      estimated_ad_recallers,\n      inline_post_engagement,\n      unique_link_clicks_ctr,\n      unique_outbound_clicks,\n      auction_competitiveness,\n      canvas_avg_view_percent,\n      catalog_segment_actions,\n      conversion_rate_ranking,\n      converted_product_value,\n      cost_per_outbound_click,\n      engagement_rate_ranking,\n      mobile_app_purchase_roas,\n      video_play_curve_actions,\n      unique_inline_link_clicks,\n      video_p25_watched_actions,\n      video_p50_watched_actions,\n      video_p75_watched_actions,\n      video_p95_watched_actions,\n      auction_max_competitor_bid,\n      converted_product_quantity,\n      cost_per_15_sec_video_view,\n      cost_per_inline_link_click,\n      unique_outbound_clicks_ctr,\n      video_p100_watched_actions,\n      video_time_watched_actions,\n      cost_per_unique_action_type,\n      unique_inline_link_click_ctr,\n      video_15_sec_watched_actions,\n      video_30_sec_watched_actions,\n      cost_per_unique_outbound_click,\n      video_avg_time_watched_actions,\n      cost_per_estimated_ad_recallers,\n      cost_per_inline_post_engagement,\n      cost_per_unique_inline_link_click,\n      instant_experience_clicks_to_open,\n      instant_experience_clicks_to_start,\n      instant_experience_outbound_clicks,\n      video_play_retention_graph_actions,\n      cost_per_2_sec_continuous_video_view,\n      video_play_retention_0_to_15s_actions,\n      video_continuous_2_sec_watched_actions,\n      video_play_retention_20_to_60s_actions,\n      qualifying_question_qualify_answer_rate,\n      catalog_segment_value_omni_purchase_roas,\n      catalog_segment_value_mobile_purchase_roas,\n      catalog_segment_value_website_purchase_roas\n  from\n      `propeller-development.meta_ads.ads_insights`\n  -- When model is run as incremental, update data from starting from the meta ads days back setting in workflow settings yaml\n  where\n      date(_airbyte_extracted_at) in unnest((select partition_dates from unnest(partitions_to_update) where site_nm = \"[object Object]\"))\n",
+            "dependencyTargets": [
+                {
+                    "schema": "meta_ads",
+                    "name": "ads_insights",
+                    "database": "propeller-development"
+                }
+            ],
+            "incrementalPreOps": [
+                "\n      \n      -- Set backstop and defaults\n      declare self_checkpoint default (select timestamp(\"2024-01-01\"));\n      declare partitions_to_update\n          array<\n              struct<\n                  site_nm string, \n                  partition_dates array<date>\n              >\n          >;\n      declare log_start_time default (select current_timestamp());\n      \n      -- Get last run time for model *table_name* from INFORMATION_SCHEMA.PARTITIONS\n      set self_checkpoint = (\n          \n              select\n                  max(last_modified_time)\n              from `propeller_dataform_template_sample_client.INFORMATION_SCHEMA.PARTITIONS`\n              where table_name = \"stg_meta_ads_insights\" and partition_id != '__NULL__'      \n      \n      \n      );\n      \n      -- Iterate through all sources and find partitions from INFORMATION_SCHEMA.PARTITIONS\n      -- that have updated since the last run time.\n      set partitions_to_update = array(\n          select as struct\n              site_nm,\n              array_agg(distinct partition_date ignore nulls) as partition_dates\n          from (\n              \n                  select\n                      \"meta_ads\" as site_nm,\n                      parse_date('%Y%m%d', partition_id) as partition_date\n                  from `propeller-development.meta_ads.INFORMATION_SCHEMA.PARTITIONS`\n                  where\n                    table_name = \"ads_insights\"\n                      -- Subtract 10 minutes to account for the runtime.  TODO log start time.\n                      and last_modified_time > timestamp_sub(self_checkpoint, interval 10 minute)         \n              \n          )\n              group by site_nm\n              having array_length(partition_dates) > 0\n      );\n      \n      "
+            ],
+            "uniqueKey": [
+                "data_date",
+                "campaign_id",
+                "adset_id",
+                "ad_id",
+                "objective",
+                "account_id",
+                "buying_type",
+                "quality_ranking",
+                "optimization_goal",
+                "attribution_setting",
+                "conversion_rate_ranking",
+                "engagement_rate_ranking"
+            ],
+            "hermeticity": "NON_HERMETIC",
+            "canonicalTarget": {
+                "schema": "propeller_dataform_template",
+                "name": "stg_meta_ads_insights",
+                "database": "df-warehouse"
+            },
+            "enumType": "INCREMENTAL",
+            "onSchemaChange": "IGNORE"
+        },
+        {
+            "type": "incremental",
+            "target": {
+                "schema": "propeller_dataform_template_sample_client",
+                "name": "meta_ads",
+                "database": "df-warehouse"
+            },
+            "query": "\n\n--Extract top level metrics by day\nselect\n    data_date,\n    date_start,\n    date_stop,\n    account_id,\n    account_name,\n    ad_id,\n    ad_name,\n    objective,\n    buying_type,\n    attribution_setting,\n    sum(reach) as reach,\n    sum(impressions) as impressions,\n    sum(frequency) as frequency,\n    sum(clicks) as clicks,\n    sum(unique_clicks) as unique_clicks,\n    sum(spend) as spend,\n    sum(cpc) as cpc,\n    sum(cpm) as cpm,\n    sum(cpp) as cpp,\n    sum(ctr) as ctr\nfrom\n    `df-warehouse.propeller_dataform_template_sample_client.stg_meta_ads_insights`\nwhere\n    data_date > date '2024-01-01'    \ngroup by\n    data_date,\n    date_start,\n    date_stop,\n    account_id,\n    account_name,\n    ad_id,\n    ad_name,\n    objective,\n    buying_type,\n    attribution_setting\n",
+            "disabled": false,
+            "protected": false,
+            "preOps": [
+                "\n      \n      -- Set backstop and defaults\n      declare self_checkpoint default (select timestamp(\"2024-01-01\"));\n      declare partitions_to_update array<date>;\n      declare log_start_time default (select current_timestamp());\n      \n      -- Get last run time for model *table_name* from INFORMATION_SCHEMA.PARTITIONS\n      -- (cached in _output_partition_history)\n      set self_checkpoint = (\n          select timestamp(\"2024-01-01\")\n      );\n      \n      -- Find partitions from INFORMATION_SCHEMA.PARTITIONS (cached in _source_partition_history) \n      -- that have updated since the last run time in the staging_table_name.\n      set partitions_to_update = (\n        select\n            array_agg(distinct parse_date('%Y%m%d', partition_id) ignore nulls)\n        from `df-warehouse.propeller_dataform_template_sample_client._df_stg_partitions`\n        where\n            table_name = \"stg_meta_ads_insights\"\n            -- Subtract 10 minutes to account for the runtime.  TODO log start time.\n            and last_modified_time > timestamp_sub(self_checkpoint, interval 10 minute)\n            and partition_id not in (\"__NULL__\")       \n      );\n      \n          \n      "
+            ],
+            "fileName": "definitions/meta_ads.js",
+            "bigquery": {
+                "partitionBy": "data_date"
+            },
+            "tags": [
+                "metaads",
+                "daily",
+                "ads",
+                "output"
+            ],
+            "actionDescriptor": {
+                "description": "Rolls up stats by ad and date."
+            },
+            "incrementalQuery": "\n\n--Extract top level metrics by day\nselect\n    data_date,\n    date_start,\n    date_stop,\n    account_id,\n    account_name,\n    ad_id,\n    ad_name,\n    objective,\n    buying_type,\n    attribution_setting,\n    sum(reach) as reach,\n    sum(impressions) as impressions,\n    sum(frequency) as frequency,\n    sum(clicks) as clicks,\n    sum(unique_clicks) as unique_clicks,\n    sum(spend) as spend,\n    sum(cpc) as cpc,\n    sum(cpm) as cpm,\n    sum(cpp) as cpp,\n    sum(ctr) as ctr\nfrom\n    `df-warehouse.propeller_dataform_template_sample_client.stg_meta_ads_insights`\nwhere\n    data_date in unnest(partitions_to_update)    \ngroup by\n    data_date,\n    date_start,\n    date_stop,\n    account_id,\n    account_name,\n    ad_id,\n    ad_name,\n    objective,\n    buying_type,\n    attribution_setting\n",
+            "dependencyTargets": [
+                {
+                    "schema": "propeller_dataform_template_sample_client",
+                    "name": "stg_meta_ads_insights",
+                    "database": "df-warehouse"
+                },
+                {
+                    "schema": "propeller_dataform_template_sample_client",
+                    "name": "_df_stg_partitions",
+                    "database": "df-warehouse"
+                }
+            ],
+            "incrementalPreOps": [
+                "\n      \n      -- Set backstop and defaults\n      declare self_checkpoint default (select timestamp(\"2024-01-01\"));\n      declare partitions_to_update array<date>;\n      declare log_start_time default (select current_timestamp());\n      \n      -- Get last run time for model *table_name* from INFORMATION_SCHEMA.PARTITIONS\n      -- (cached in _output_partition_history)\n      set self_checkpoint = (\n          \n              select\n                  max(last_modified_time)\n              from `propeller_dataform_template_sample_client.INFORMATION_SCHEMA.PARTITIONS`\n              where table_name = \"meta_ads\" and partition_id != '__NULL__'      \n      \n      \n      );\n      \n      -- Find partitions from INFORMATION_SCHEMA.PARTITIONS (cached in _source_partition_history) \n      -- that have updated since the last run time in the staging_table_name.\n      set partitions_to_update = (\n        select\n            array_agg(distinct parse_date('%Y%m%d', partition_id) ignore nulls)\n        from `df-warehouse.propeller_dataform_template_sample_client._df_stg_partitions`\n        where\n            table_name = \"stg_meta_ads_insights\"\n            -- Subtract 10 minutes to account for the runtime.  TODO log start time.\n            and last_modified_time > timestamp_sub(self_checkpoint, interval 10 minute)\n            and partition_id not in (\"__NULL__\")       \n      );\n      \n          \n            delete from `df-warehouse.propeller_dataform_template_sample_client.meta_ads` where data_date in unnest(partitions_to_update)\n      \n      "
+            ],
+            "hermeticity": "NON_HERMETIC",
+            "canonicalTarget": {
+                "schema": "propeller_dataform_template",
+                "name": "meta_ads",
+                "database": "df-warehouse"
+            },
+            "enumType": "INCREMENTAL",
+            "onSchemaChange": "IGNORE"
+        },
+        {
+            "type": "incremental",
+            "target": {
+                "schema": "propeller_dataform_template_sample_client",
+                "name": "meta_adsets",
+                "database": "df-warehouse"
+            },
+            "query": "\n\n--Extract top level metrics by day\nselect\n    data_date,\n    date_start,\n    date_stop,\n    account_id,\n    account_name,\n    adset_id,\n    adset_name,\n    objective,\n    buying_type,\n    attribution_setting,\n    sum(reach) as reach,\n    sum(impressions) as impressions,\n    sum(frequency) as frequency,\n    sum(clicks) as clicks,\n    sum(unique_clicks) as unique_clicks,\n    sum(spend) as spend,\n    sum(cpc) as cpc,\n    sum(cpm) as cpm,\n    sum(cpp) as cpp,\n    sum(ctr) as ctr\nfrom\n    `df-warehouse.propeller_dataform_template_sample_client.stg_meta_ads_insights`\nwhere\n    data_date > date '2024-01-01'\ngroup by\n    data_date,\n    date_start,\n    date_stop,\n    account_id,\n    account_name,\n    adset_id,\n    adset_name,\n    objective,\n    buying_type,\n    attribution_setting\n",
+            "disabled": false,
+            "protected": false,
+            "preOps": [
+                "\n      \n      -- Set backstop and defaults\n      declare self_checkpoint default (select timestamp(\"2024-01-01\"));\n      declare partitions_to_update array<date>;\n      declare log_start_time default (select current_timestamp());\n      \n      -- Get last run time for model *table_name* from INFORMATION_SCHEMA.PARTITIONS\n      -- (cached in _output_partition_history)\n      set self_checkpoint = (\n          select timestamp(\"2024-01-01\")\n      );\n      \n      -- Find partitions from INFORMATION_SCHEMA.PARTITIONS (cached in _source_partition_history) \n      -- that have updated since the last run time in the staging_table_name.\n      set partitions_to_update = (\n        select\n            array_agg(distinct parse_date('%Y%m%d', partition_id) ignore nulls)\n        from `df-warehouse.propeller_dataform_template_sample_client._df_stg_partitions`\n        where\n            table_name = \"stg_meta_ads_insights\"\n            -- Subtract 10 minutes to account for the runtime.  TODO log start time.\n            and last_modified_time > timestamp_sub(self_checkpoint, interval 10 minute)\n            and partition_id not in (\"__NULL__\")       \n      );\n      \n          \n      "
+            ],
+            "fileName": "definitions/meta_ads.js",
+            "bigquery": {
+                "partitionBy": "data_date"
+            },
+            "tags": [
+                "metaads",
+                "daily",
+                "adsets",
+                "output"
+            ],
+            "actionDescriptor": {
+                "description": "Rolls up stats by ad and date."
+            },
+            "incrementalQuery": "\n\n--Extract top level metrics by day\nselect\n    data_date,\n    date_start,\n    date_stop,\n    account_id,\n    account_name,\n    adset_id,\n    adset_name,\n    objective,\n    buying_type,\n    attribution_setting,\n    sum(reach) as reach,\n    sum(impressions) as impressions,\n    sum(frequency) as frequency,\n    sum(clicks) as clicks,\n    sum(unique_clicks) as unique_clicks,\n    sum(spend) as spend,\n    sum(cpc) as cpc,\n    sum(cpm) as cpm,\n    sum(cpp) as cpp,\n    sum(ctr) as ctr\nfrom\n    `df-warehouse.propeller_dataform_template_sample_client.stg_meta_ads_insights`\nwhere\n    data_date in unnest(partitions_to_update)\ngroup by\n    data_date,\n    date_start,\n    date_stop,\n    account_id,\n    account_name,\n    adset_id,\n    adset_name,\n    objective,\n    buying_type,\n    attribution_setting\n",
+            "dependencyTargets": [
+                {
+                    "schema": "propeller_dataform_template_sample_client",
+                    "name": "stg_meta_ads_insights",
+                    "database": "df-warehouse"
+                },
+                {
+                    "schema": "propeller_dataform_template_sample_client",
+                    "name": "_df_stg_partitions",
+                    "database": "df-warehouse"
+                }
+            ],
+            "incrementalPreOps": [
+                "\n      \n      -- Set backstop and defaults\n      declare self_checkpoint default (select timestamp(\"2024-01-01\"));\n      declare partitions_to_update array<date>;\n      declare log_start_time default (select current_timestamp());\n      \n      -- Get last run time for model *table_name* from INFORMATION_SCHEMA.PARTITIONS\n      -- (cached in _output_partition_history)\n      set self_checkpoint = (\n          \n              select\n                  max(last_modified_time)\n              from `propeller_dataform_template_sample_client.INFORMATION_SCHEMA.PARTITIONS`\n              where table_name = \"meta_adsets\" and partition_id != '__NULL__'      \n      \n      \n      );\n      \n      -- Find partitions from INFORMATION_SCHEMA.PARTITIONS (cached in _source_partition_history) \n      -- that have updated since the last run time in the staging_table_name.\n      set partitions_to_update = (\n        select\n            array_agg(distinct parse_date('%Y%m%d', partition_id) ignore nulls)\n        from `df-warehouse.propeller_dataform_template_sample_client._df_stg_partitions`\n        where\n            table_name = \"stg_meta_ads_insights\"\n            -- Subtract 10 minutes to account for the runtime.  TODO log start time.\n            and last_modified_time > timestamp_sub(self_checkpoint, interval 10 minute)\n            and partition_id not in (\"__NULL__\")       \n      );\n      \n          \n            delete from `df-warehouse.propeller_dataform_template_sample_client.meta_adsets` where data_date in unnest(partitions_to_update)\n      \n      "
+            ],
+            "hermeticity": "NON_HERMETIC",
+            "canonicalTarget": {
+                "schema": "propeller_dataform_template",
+                "name": "meta_adsets",
+                "database": "df-warehouse"
+            },
+            "enumType": "INCREMENTAL",
+            "onSchemaChange": "IGNORE"
+        },
+        {
+            "type": "incremental",
+            "target": {
+                "schema": "propeller_dataform_template_sample_client",
+                "name": "meta_campaigns",
+                "database": "df-warehouse"
+            },
+            "query": "\n\n--Extract top level metrics by day\nselect\n    data_date,\n    date_start,\n    date_stop,\n    account_id,\n    account_name,\n    campaign_id,\n    campaign_name,\n    objective,\n    buying_type,\n    attribution_setting,\n    sum(reach) as reach,\n    sum(impressions) as impressions,\n    sum(frequency) as frequency,\n    sum(clicks) as clicks,\n    sum(unique_clicks) as unique_clicks,\n    sum(spend) as spend,\n    sum(cpc) as cpc,\n    sum(cpm) as cpm,\n    sum(cpp) as cpp,\n    sum(ctr) as ctr\nfrom\n    `df-warehouse.propeller_dataform_template_sample_client.stg_meta_ads_insights`\nwhere\n    data_date > date '2024-01-01'\ngroup by\n    data_date,\n    date_start,\n    date_stop,\n    account_id,\n    account_name,\n    campaign_id,\n    campaign_name,\n    objective,\n    buying_type,\n    attribution_setting\n",
+            "disabled": false,
+            "protected": false,
+            "preOps": [
+                "\n      \n      -- Set backstop and defaults\n      declare self_checkpoint default (select timestamp(\"2024-01-01\"));\n      declare partitions_to_update array<date>;\n      declare log_start_time default (select current_timestamp());\n      \n      -- Get last run time for model *table_name* from INFORMATION_SCHEMA.PARTITIONS\n      -- (cached in _output_partition_history)\n      set self_checkpoint = (\n          select timestamp(\"2024-01-01\")\n      );\n      \n      -- Find partitions from INFORMATION_SCHEMA.PARTITIONS (cached in _source_partition_history) \n      -- that have updated since the last run time in the staging_table_name.\n      set partitions_to_update = (\n        select\n            array_agg(distinct parse_date('%Y%m%d', partition_id) ignore nulls)\n        from `df-warehouse.propeller_dataform_template_sample_client._df_stg_partitions`\n        where\n            table_name = \"stg_meta_ads_insights\"\n            -- Subtract 10 minutes to account for the runtime.  TODO log start time.\n            and last_modified_time > timestamp_sub(self_checkpoint, interval 10 minute)\n            and partition_id not in (\"__NULL__\")       \n      );\n      \n          \n      "
+            ],
+            "fileName": "definitions/meta_ads.js",
+            "bigquery": {
+                "partitionBy": "data_date"
+            },
+            "tags": [
+                "metaads",
+                "daily",
+                "campaigns",
+                "output"
+            ],
+            "actionDescriptor": {
+                "description": "Rolls up stats by ad and date."
+            },
+            "incrementalQuery": "\n\n--Extract top level metrics by day\nselect\n    data_date,\n    date_start,\n    date_stop,\n    account_id,\n    account_name,\n    campaign_id,\n    campaign_name,\n    objective,\n    buying_type,\n    attribution_setting,\n    sum(reach) as reach,\n    sum(impressions) as impressions,\n    sum(frequency) as frequency,\n    sum(clicks) as clicks,\n    sum(unique_clicks) as unique_clicks,\n    sum(spend) as spend,\n    sum(cpc) as cpc,\n    sum(cpm) as cpm,\n    sum(cpp) as cpp,\n    sum(ctr) as ctr\nfrom\n    `df-warehouse.propeller_dataform_template_sample_client.stg_meta_ads_insights`\nwhere\n    data_date in unnest(partitions_to_update)\ngroup by\n    data_date,\n    date_start,\n    date_stop,\n    account_id,\n    account_name,\n    campaign_id,\n    campaign_name,\n    objective,\n    buying_type,\n    attribution_setting\n",
+            "dependencyTargets": [
+                {
+                    "schema": "propeller_dataform_template_sample_client",
+                    "name": "stg_meta_ads_insights",
+                    "database": "df-warehouse"
+                },
+                {
+                    "schema": "propeller_dataform_template_sample_client",
+                    "name": "_df_stg_partitions",
+                    "database": "df-warehouse"
+                }
+            ],
+            "incrementalPreOps": [
+                "\n      \n      -- Set backstop and defaults\n      declare self_checkpoint default (select timestamp(\"2024-01-01\"));\n      declare partitions_to_update array<date>;\n      declare log_start_time default (select current_timestamp());\n      \n      -- Get last run time for model *table_name* from INFORMATION_SCHEMA.PARTITIONS\n      -- (cached in _output_partition_history)\n      set self_checkpoint = (\n          \n              select\n                  max(last_modified_time)\n              from `propeller_dataform_template_sample_client.INFORMATION_SCHEMA.PARTITIONS`\n              where table_name = \"meta_campaigns\" and partition_id != '__NULL__'      \n      \n      \n      );\n      \n      -- Find partitions from INFORMATION_SCHEMA.PARTITIONS (cached in _source_partition_history) \n      -- that have updated since the last run time in the staging_table_name.\n      set partitions_to_update = (\n        select\n            array_agg(distinct parse_date('%Y%m%d', partition_id) ignore nulls)\n        from `df-warehouse.propeller_dataform_template_sample_client._df_stg_partitions`\n        where\n            table_name = \"stg_meta_ads_insights\"\n            -- Subtract 10 minutes to account for the runtime.  TODO log start time.\n            and last_modified_time > timestamp_sub(self_checkpoint, interval 10 minute)\n            and partition_id not in (\"__NULL__\")       \n      );\n      \n          \n            delete from `df-warehouse.propeller_dataform_template_sample_client.meta_campaigns` where data_date in unnest(partitions_to_update)\n      \n      "
+            ],
+            "hermeticity": "NON_HERMETIC",
+            "canonicalTarget": {
+                "schema": "propeller_dataform_template",
+                "name": "meta_campaigns",
+                "database": "df-warehouse"
+            },
+            "enumType": "INCREMENTAL",
+            "onSchemaChange": "IGNORE"
+        },
+        {
+            "type": "incremental",
+            "target": {
+                "schema": "propeller_dataform_template_sample_client",
+                "name": "meta_lookup",
+                "database": "df-warehouse"
+            },
+            "query": "\n\n--Extract top level attributes by day\nwith daily_metrics as (\n    select\n        data_date,\n        date_start,\n        date_stop,\n        account_id,\n        account_name,\n        campaign_id,\n        campaign_name,\n        adset_id,\n        adset_name,\n        ad_id,\n        ad_name,\n        objective,\n        buying_type,\n        attribution_setting\n    from\n        `df-warehouse.propeller_dataform_template_sample_client.stg_meta_ads_insights`\n    where\n        data_date > date '2024-01-01'        \n)\n\n-- Get the most recent attributes\nselect\n    data_date,\n    date_start,\n    date_stop,\n    account_id,\n    account_name,\n    campaign_id,\n    campaign_name,\n    adset_id,\n    adset_name,\n    ad_id,\n    ad_name,\n    objective,\n    buying_type,\n    attribution_setting\nfrom\n    daily_metrics\nqualify\n    row_number() over (\n        partition by data_date,\n                     date_start,\n                     date_stop,\n                     account_id,\n                     account_name,\n                     campaign_id,\n                     campaign_name,\n                     adset_id,\n                     adset_name,\n                     ad_id,\n                     ad_name,\n                     objective,\n                     buying_type,\n                     attribution_setting\n    order by data_date desc\n) = 1\n",
+            "disabled": false,
+            "protected": false,
+            "preOps": [
+                "\n      \n      -- Set backstop and defaults\n      declare self_checkpoint default (select timestamp(\"2024-01-01\"));\n      declare partitions_to_update array<date>;\n      declare log_start_time default (select current_timestamp());\n      \n      -- Get last run time for model *table_name* from INFORMATION_SCHEMA.PARTITIONS\n      -- (cached in _output_partition_history)\n      set self_checkpoint = (\n          select timestamp(\"2024-01-01\")\n      );\n      \n      -- Find partitions from INFORMATION_SCHEMA.PARTITIONS (cached in _source_partition_history) \n      -- that have updated since the last run time in the staging_table_name.\n      set partitions_to_update = (\n        select\n            array_agg(distinct parse_date('%Y%m%d', partition_id) ignore nulls)\n        from `df-warehouse.propeller_dataform_template_sample_client._df_stg_partitions`\n        where\n            table_name = \"stg_meta_ads_insights\"\n            -- Subtract 10 minutes to account for the runtime.  TODO log start time.\n            and last_modified_time > timestamp_sub(self_checkpoint, interval 10 minute)\n            and partition_id not in (\"__NULL__\")       \n      );\n      \n          \n      "
+            ],
+            "fileName": "definitions/meta_ads.js",
+            "bigquery": {
+                "partitionBy": "data_date"
+            },
+            "tags": [
+                "metaads",
+                "daily",
+                "lookup",
+                "output"
+            ],
+            "actionDescriptor": {
+                "description": "Lookup table for campaign attributes."
+            },
+            "incrementalQuery": "\n\n--Extract top level attributes by day\nwith daily_metrics as (\n    select\n        data_date,\n        date_start,\n        date_stop,\n        account_id,\n        account_name,\n        campaign_id,\n        campaign_name,\n        adset_id,\n        adset_name,\n        ad_id,\n        ad_name,\n        objective,\n        buying_type,\n        attribution_setting\n    from\n        `df-warehouse.propeller_dataform_template_sample_client.stg_meta_ads_insights`\n    where\n        data_date in unnest(partitions_to_update)        \n)\n\n-- Get the most recent attributes\nselect\n    data_date,\n    date_start,\n    date_stop,\n    account_id,\n    account_name,\n    campaign_id,\n    campaign_name,\n    adset_id,\n    adset_name,\n    ad_id,\n    ad_name,\n    objective,\n    buying_type,\n    attribution_setting\nfrom\n    daily_metrics\nqualify\n    row_number() over (\n        partition by data_date,\n                     date_start,\n                     date_stop,\n                     account_id,\n                     account_name,\n                     campaign_id,\n                     campaign_name,\n                     adset_id,\n                     adset_name,\n                     ad_id,\n                     ad_name,\n                     objective,\n                     buying_type,\n                     attribution_setting\n    order by data_date desc\n) = 1\n",
+            "dependencyTargets": [
+                {
+                    "schema": "propeller_dataform_template_sample_client",
+                    "name": "stg_meta_ads_insights",
+                    "database": "df-warehouse"
+                },
+                {
+                    "schema": "propeller_dataform_template_sample_client",
+                    "name": "_df_stg_partitions",
+                    "database": "df-warehouse"
+                }
+            ],
+            "incrementalPreOps": [
+                "\n      \n      -- Set backstop and defaults\n      declare self_checkpoint default (select timestamp(\"2024-01-01\"));\n      declare partitions_to_update array<date>;\n      declare log_start_time default (select current_timestamp());\n      \n      -- Get last run time for model *table_name* from INFORMATION_SCHEMA.PARTITIONS\n      -- (cached in _output_partition_history)\n      set self_checkpoint = (\n          \n              select\n                  max(last_modified_time)\n              from `propeller_dataform_template_sample_client.INFORMATION_SCHEMA.PARTITIONS`\n              where table_name = \"meta_lookup\" and partition_id != '__NULL__'      \n      \n      \n      );\n      \n      -- Find partitions from INFORMATION_SCHEMA.PARTITIONS (cached in _source_partition_history) \n      -- that have updated since the last run time in the staging_table_name.\n      set partitions_to_update = (\n        select\n            array_agg(distinct parse_date('%Y%m%d', partition_id) ignore nulls)\n        from `df-warehouse.propeller_dataform_template_sample_client._df_stg_partitions`\n        where\n            table_name = \"stg_meta_ads_insights\"\n            -- Subtract 10 minutes to account for the runtime.  TODO log start time.\n            and last_modified_time > timestamp_sub(self_checkpoint, interval 10 minute)\n            and partition_id not in (\"__NULL__\")       \n      );\n      \n          \n            delete from `df-warehouse.propeller_dataform_template_sample_client.meta_lookup` where data_date in unnest(partitions_to_update)\n      \n      "
+            ],
+            "hermeticity": "NON_HERMETIC",
+            "canonicalTarget": {
+                "schema": "propeller_dataform_template",
+                "name": "meta_lookup",
+                "database": "df-warehouse"
+            },
+            "enumType": "INCREMENTAL",
+            "onSchemaChange": "IGNORE"
+        }
+    ],
+    "projectConfig": {
+        "warehouse": "bigquery",
+        "defaultSchema": "df_warehouse",
+        "assertionSchema": "df_warehouse_assertions",
+        "schemaSuffix": "sample_client",
+        "defaultDatabase": "df-warehouse",
+        "vars": {
+            "datasetStaging": "df_warehouse_staging",
+            "datasetOutput": "df_warehouse",
+            "datasetExtras": "df_warehouse_extras",
+            "ga4SourceDatabase": "propeller-development",
+            "ga4SourceDataset": "google_analytics",
+            "ga4ReportingIdentity": "observed",
+            "ga4DaysBack": "3",
+            "ga4StartDate": "2020-01-01",
+            "ga4IncludeIntraday": "false",
+            "ga4Timezone": "America/New_York",
+            "ga4UnwantedReferrals": "00000000.com,test.com"
+        },
+        "defaultLocation": "US"
+    },
+    "graphErrors": {},
+    "declarations": [
+        {
+            "target": {
+                "schema": "meta_ads",
+                "name": "ads_insights",
+                "database": "propeller-development"
+            },
+            "actionDescriptor": {
+                "description": "TODO"
+            },
+            "fileName": "definitions/meta_ads.js",
+            "canonicalTarget": {
+                "schema": "meta_ads",
+                "name": "ads_insights",
+                "database": "propeller-development"
+            }
+        }
+    ],
+    "dataformCoreVersion": "3.0.22",
+    "targets": [
+        {
+            "schema": "meta_ads",
+            "name": "ads_insights",
+            "database": "propeller-development"
+        },
+        {
+            "schema": "propeller_dataform_template",
+            "name": "_df_stg_partitions",
+            "database": "df-warehouse"
+        },
+        {
+            "schema": "propeller_dataform_template",
+            "name": "stg_meta_ads_insights",
+            "database": "df-warehouse"
+        },
+        {
+            "schema": "propeller_dataform_template",
+            "name": "meta_ads",
+            "database": "df-warehouse"
+        },
+        {
+            "schema": "propeller_dataform_template",
+            "name": "meta_adsets",
+            "database": "df-warehouse"
+        },
+        {
+            "schema": "propeller_dataform_template",
+            "name": "meta_campaigns",
+            "database": "df-warehouse"
+        },
+        {
+            "schema": "propeller_dataform_template",
+            "name": "meta_lookup",
+            "database": "df-warehouse"
+        }
+    ]
+}
+
