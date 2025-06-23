@@ -5,7 +5,7 @@ const config = {
   sources: [
     {
       database: "propeller-development",
-      schema: "bing",
+      schema: "airbyte_bing_2",
     },
   ],
   target: {
