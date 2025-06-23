@@ -5,7 +5,7 @@ const config = {
   sources: [
     {
       database: "<CLIENT_SOURCE_PROJECT>",
-      schema: "bing",
+      schema: "airbyte_bing",
     },
   ],
   target: {
