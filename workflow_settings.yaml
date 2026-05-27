@@ -1,17 +1,17 @@
 defaultProject: ken-e-production
 defaultLocation: US
-defaultDataset: a00000X
+defaultDataset: a00000X_staging
 defaultAssertionDataset: a00000X_assertions
-datasetSuffix: sample_client
 vars:
     datasetStaging: "a00000X_staging"
-    datasetOutput: "a00000X"
-    datasetExtras: "a00000X_extras"
+    datasetOutput: "a00000X_output"
+    datasetExtras: "a00000X_output"
     ga4SourceDatabase: "<CLIENT_SOURCE_PROJECT>"
-    ga4SourceDataset: "google_analytics"
+    ga4SourceDataset: "analytics_XXXXXXXXX"
     ga4ReportingIdentity: "observed"
     ga4DaysBack: "3"
-    ga4StartDate: "2020-01-01"
+    ga4StartDate: "2024-01-01"
     ga4IncludeIntraday: "false"
     ga4Timezone: "America/New_York"
-    ga4UnwantedReferrals: "00000000.com,test.com"
+    ga4UnwantedReferrals: "test.com"
+    environment: "development"

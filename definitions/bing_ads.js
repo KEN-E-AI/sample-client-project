@@ -9,7 +9,9 @@ const config = {
     },
   ],
   target: {
-    database: "ken-e-production",
+    database: dataform.projectConfig.defaultDatabase,
+    stagingSchema: dataform.projectConfig.vars.datasetStaging,
+    outputSchema: dataform.projectConfig.vars.datasetOutput,
   },
 };
 

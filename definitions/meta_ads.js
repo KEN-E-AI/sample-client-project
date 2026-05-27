@@ -5,11 +5,14 @@ const config = {
   sources: [
     {
       database: "<CLIENT_SOURCE_PROJECT>",
-      schema: "meta_ads",
+      schema: "airbyte_facebook_<META_AD_ACCOUNT_ID>",
     },
+    // Add additional Meta Ads accounts here if the client has more than one.
   ],
   target: {
-    database: "ken-e-production",
+    database: dataform.projectConfig.defaultDatabase,
+    stagingSchema: dataform.projectConfig.vars.datasetStaging,
+    outputSchema: dataform.projectConfig.vars.datasetOutput,
   },
 };
 

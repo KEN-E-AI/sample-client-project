@@ -1,16 +1,18 @@
 const gsc = require("@ken-e/dataform-gsc");
 
 const config = {
-  startDate: "2025-01-01",
+  startDate: "2024-01-01",
   sources: {
     database: "<CLIENT_SOURCE_PROJECT>",
     schemas: [
-      "searchconsole_a00000X_<SITE_NAME>",
-      "searchconsole_a00000X_<SITE_NAME>_copy",
+      "searchconsole_<SITE_NAME>",
+      // Add additional Search Console properties here.
     ],
   },
   target: {
-    database: "ken-e-production",
+    database: dataform.projectConfig.defaultDatabase,
+    sourceSchema: dataform.projectConfig.vars.datasetStaging,
+    outputSchema: dataform.projectConfig.vars.datasetOutput,
   },
 };
 

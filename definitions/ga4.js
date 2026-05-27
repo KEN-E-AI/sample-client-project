@@ -2,41 +2,47 @@ const ga4 = require("@ken-e/dataform-ga4");
 
 const {
   customEventParams,
-  conversionEventNames,
+  customUserProps,
+  customEventParamsFromUserProps,
   customQueryParams,
+  conversionEventNames,
+  customUserFields,
+  customSessionFieldsFromEvents,
+  customSessionFieldsFromSessions,
+  customEventFields,
+  customChannelGroupings,
 } = require("includes/project_variables");
 
 const config = {
   enableSessions: true,
   enableItems: true,
   enableUsers: true,
-  customEventParams: customEventParams,
-  customQueryParams: customQueryParams,
-  startDate: "2021-06-01",
+  enableIntraday: dataform.projectConfig.vars.ga4IncludeIntraday === "true",
+
+  startDate: dataform.projectConfig.vars.ga4StartDate,
+  daysBack: Number(dataform.projectConfig.vars.ga4DaysBack),
+  timezone: dataform.projectConfig.vars.ga4Timezone,
+  unwantedReferrals: dataform.projectConfig.vars.ga4UnwantedReferrals,
+
   conversionEventNames: conversionEventNames,
-  contentGroups: ["1 as x", "2 as b"],
-  customChannelGroupings: [
-    {
-      group_name: "customGroup1",
-      group_function: (source, medium, campaign) => {
-        return `
-    
-    case
-      when (${source} is null or ${source} in ('direct','(direct)','(not set)')) and (${medium} is null or ${medium} in ('(not set)', '(none)')) then 'Direct'
-      when ${campaign} like '%cross-network %' then 'Cross-network'
-    end 
-    
-    `;
-      },
-    },
-  ],
+  customEventParams: customEventParams,
+  customUserProps: customUserProps,
+  customEventParamsFromUserProps: customEventParamsFromUserProps,
+  customQueryParams: customQueryParams,
+  customUserFields: customUserFields,
+  customSessionFieldsFromEvents: customSessionFieldsFromEvents,
+  customSessionFieldsFromSessions: customSessionFieldsFromSessions,
+  customEventFields: customEventFields,
+  customChannelGroupings: customChannelGroupings,
+
   sources: {
-    database: "<CLIENT_SOURCE_PROJECT>",
-    schemas: "google_analytics",
+    database: dataform.projectConfig.vars.ga4SourceDatabase,
+    schemas: dataform.projectConfig.vars.ga4SourceDataset,
   },
   target: {
-    database: "ken-e-production",
-    stagingSchema: dataform.projectConfig.vars.datasetOutput,
+    database: dataform.projectConfig.defaultDatabase,
+    stagingSchema: dataform.projectConfig.vars.datasetStaging,
+    outputSchema: dataform.projectConfig.vars.datasetOutput,
   },
 };
 
