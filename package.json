@@ -1,14 +1,14 @@
 {
-  "name": "propeller-ga4-dataform-sample-project",
+  "name": "propeller-sample-client-project",
   "dependencies": {
-    "@dataform/core": "3.0.22",
-    "@ken-e/dataform-ga4": "latest",
-    "@ken-e/dataform-gsc": "latest",
-    "@ken-e/dataform-google-ads": "latest",
-    "@ken-e/dataform-meta-ads": "latest",
-    "@ken-e/dataform-bing-ads": "latest",
-    "@ken-e/dataform-youtube": "file:../dataform-youtube/"
-
+    "@dataform/core": "3.0.35",
+    "@ken-e/dataform-ga4": "0.0.16",
+    "@ken-e/dataform-google-ads": "0.0.20",
+    "@ken-e/dataform-meta-ads": "0.0.22",
+    "@ken-e/dataform-bing-ads": "0.0.13",
+    "@ken-e/dataform-gsc": "0.0.13",
+    "@ken-e/dataform-youtube": "0.0.12",
+    "@ken-e/dataform-dv360": "0.0.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",

@@ -4,12 +4,15 @@ const config = {
   startDate: "2024-01-01",
   sources: [
     {
-      database: "propeller-development",
-      schema: "meta_ads",
+      database: "<CLIENT_SOURCE_PROJECT>",
+      schema: "airbyte_facebook_<META_AD_ACCOUNT_ID>",
     },
+    // Add additional Meta Ads accounts here if the client has more than one.
   ],
   target: {
-    database: "df-warehouse",
+    database: dataform.projectConfig.defaultDatabase,
+    stagingSchema: dataform.projectConfig.vars.datasetStaging,
+    outputSchema: dataform.projectConfig.vars.datasetOutput,
   },
 };
 

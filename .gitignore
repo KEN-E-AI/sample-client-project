@@ -1,2 +1,5 @@
-.df-credentials.json
 node_modules/
+.df-credentials.json
+.DS_Store
+.claude/
+out.json

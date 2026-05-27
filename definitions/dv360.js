@@ -1,14 +1,15 @@
-const google_ads = require("@ken-e/dataform-google-ads");
+const dv360 = require("@ken-e/dataform-dv360");
 
 const config = {
   startDate: "2024-01-01",
+  daysBack: 14,
   sources: [
     {
       database: "<CLIENT_SOURCE_PROJECT>",
-      schema: "googleads_a00000X_<GOOGLE_ADS_CUSTOMER_ID>",
-      customer_id: "<GOOGLE_ADS_CUSTOMER_ID>",
+      reportSchema: "dv360_<DV360_ADVERTISER_ID>_reports",
+      reportTablePrefix: "<DV360_REPORT_PREFIX>",
+      advertiser_id: "<DV360_ADVERTISER_ID>",
     },
-    // Add additional Google Ads accounts here if the client has more than one.
   ],
   target: {
     database: dataform.projectConfig.defaultDatabase,
@@ -17,4 +18,4 @@ const config = {
   },
 };
 
-google_ads(config);
+dv360(config);
