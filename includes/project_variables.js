@@ -1,74 +1,91 @@
+// GA4 custom event parameters
+// Each entry pulls a value out of event_params into its own typed column.
+// Supported types: string, int, double, float
 const customEventParams = [
-  {
-    param: "my_param_1",
-    type: "string",
-  },
-  {
-    param: "my_param_2",
-    type: "int",
-  },
-  {
-    param: "my_param_3",
-    type: "double",
-  },
-  {
-    param: "my_param_4",
-    type: "float",
-  },
+  // { param: "category", type: "string" },
+  // { param: "step_number", type: "int" },
 ];
 
+// GA4 custom user properties
+// Each entry pulls a value out of user_properties into its own typed column on ga4_users.
 const customUserProps = [
-  //   { param: 'member_id', type: 'string' },
-  //   { param: 'member_level', type: 'string' }
+  // { param: "member_level", type: "string" },
 ];
 
+// GA4 event params sourced from user properties
+// Same shape as customEventParams, but the value is looked up in user_properties
+// at event time instead of event_params.
+const customEventParamsFromUserProps = [
+  // { param: "is_logged_in", type: "string" },
+];
+
+// GA4 query parameters extracted from page_location
+// Each entry pulls ?<param>=... out of page_location into its own column.
 const customQueryParams = [
-  {
-    param: "my_param_1",
-    description: "Sample description for this column.",
-    alias: "test1",
-  },
+  // {
+  //   param: "utm_source",
+  //   description: "UTM source from page_location.",
+  //   alias: "utm_source",
+  // },
 ];
 
-const conversionEventNames = ["purchase", "file_download"];
+// GA4 conversion event names
+const conversionEventNames = [
+  // "purchase",
+  // "generate_lead",
+];
 
-/**
- * Sample custom conversion logic.
- * @returns {string}
- */
-const isEventConversion = () => {
-  return `
-      case 
-          when event_name in ('${conversionEventNames.join("', '")}')
-              then struct(5 as event_value_in_usd, event_name as goal)
-          -- when event_name = 'something_conversion' and form_name like '%newsletter%'
-          --     then struct(5 as event_value_in_usd, "newsletter_signup" as goal)
-          -- when event_name = 'scroll' and percent_scrolled in (25, 50, 75, 100)
-          --     then struct(10 as event_value_in_usd, concat("scroll_", percent_scrolled) as goal)
-      end
-  `;
-};
+// GA4 custom user fields
+// Raw SQL expressions injected into the ga4_users SELECT.
+const customUserFields = [
+  // `LOGICAL_OR(CASE WHEN event_name = 'page_view' AND REGEXP_CONTAINS(page_location, r'/account/') THEN TRUE ELSE FALSE END) AS existing_customer`,
+];
 
-/**
- *  This is an example of how a custom content grouping might be applied.
- * @returns {string}
- */
-const getContentGroup = () => {
-  return `case 
-          when regexp_contains(page_location, '/search') then 'search'
-          when regexp_contains(page_location, '/shop') then "shopping"
-          when regexp_contains(page_location, '/checkout') then 'checkout'
-          when regexp_contains(page_location, '/account') then 'account'   
-          else 'other'
-      end`;
-};
+// GA4 custom session fields evaluated inside the base_sessions aggregation.
+// Reference event-level columns (event_name, event_params, traffic_type, etc).
+const customSessionFieldsFromEvents = [
+  // `SUM(CASE WHEN event_name = 'generate_lead' THEN 1 ELSE 0 END) AS totalSession_generateLeads`,
+  // `SUM(CASE WHEN event_name = 'file_download' THEN 1 ELSE 0 END) AS totalSession_fileDownloads`,
+];
 
-// Export project vars
+// GA4 custom session fields evaluated at the session level.
+// Reference session-level columns (landing_page, source, medium, etc).
+const customSessionFieldsFromSessions = [
+  // `REGEXP_CONTAINS(landing_page, '/blog') AS landed_on_blog`,
+];
+
+// GA4 custom event fields
+// Raw SQL expressions added to the ga4_events SELECT.
+const customEventFields = [
+  // `CASE WHEN event_name = 'view_item' THEN TRUE ELSE FALSE END AS view_item_event`,
+];
+
+// GA4 custom channel groupings
+// Each entry adds a column with a CASE expression that classifies a session
+// into a channel. The group_function receives the source, medium, and campaign
+// column expressions and must return a SQL CASE expression.
+const customChannelGroupings = [
+  // {
+  //   group_name: "customGroup1",
+  //   group_function: (source, medium, campaign) => `
+  //     case
+  //       when (${source} is null or ${source} in ('direct','(direct)','(not set)'))
+  //         and (${medium} is null or ${medium} in ('(not set)', '(none)')) then 'Direct'
+  //       when ${campaign} like '%cross-network%' then 'Cross-network'
+  //     end
+  //   `,
+  // },
+];
+
 module.exports = {
   customEventParams,
   customUserProps,
-  conversionEventNames,
+  customEventParamsFromUserProps,
   customQueryParams,
-  isEventConversion,
-  getContentGroup,
+  conversionEventNames,
+  customUserFields,
+  customSessionFieldsFromEvents,
+  customSessionFieldsFromSessions,
+  customEventFields,
+  customChannelGroupings,
 };

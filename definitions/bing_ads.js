@@ -4,12 +4,14 @@ const config = {
   startDate: "2024-01-01",
   sources: [
     {
-      database: "propeller-development",
-      schema: "airbyte_bing_2",
+      database: "<CLIENT_SOURCE_PROJECT>",
+      schema: "airbyte_bing",
     },
   ],
   target: {
-    database: "df-warehouse",
+    database: dataform.projectConfig.defaultDatabase,
+    stagingSchema: dataform.projectConfig.vars.datasetStaging,
+    outputSchema: dataform.projectConfig.vars.datasetOutput,
   },
 };
 
