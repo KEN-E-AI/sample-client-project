@@ -1,16 +1,16 @@
 const youtube = require("@ken-e/dataform-youtube");
 
 const config = {
-  datasetStaging: "a00000X_yt_staging",
-  datasetIntermediate: "a00000X_yt_intermediate",
-  datasetOutput: "a00000X_yt_output",
-  datasetExtras: "a00000X_yt_extras",
-  daysBack: "7",
-  startDate: "2024-09-01",
-  titlesProject: "ken-e-production",
-  titlesDataset: "a00000X_youtube",
-  titlesTable: "video_titles",
-  playlistTable: "playlist_titles",
+  startDate: "2024-01-01",
+  daysBack: 10,
+
+  // Lookup tables for video and playlist titles. Point these at the staging
+  // dataset so the package can resolve title columns in its output layer.
+  titlesProject: dataform.projectConfig.defaultDatabase,
+  titlesDataset: dataform.projectConfig.vars.datasetStaging,
+  titlesTable: "stg_yt_video_titles",
+  playlistTable: "stg_yt_playlist_titles",
+
   sources: [
     {
       database: "<CLIENT_SOURCE_PROJECT>",
@@ -19,7 +19,9 @@ const config = {
     },
   ],
   target: {
-    database: "ken-e-production",
+    database: dataform.projectConfig.defaultDatabase,
+    stagingSchema: dataform.projectConfig.vars.datasetStaging,
+    outputSchema: dataform.projectConfig.vars.datasetOutput,
   },
 };
 
