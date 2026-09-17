@@ -4,6 +4,10 @@
 // package and your own models describe the same columns. Per-client
 // customizations live in includes/project_variables.js.
 
+// Every ga4* var below must stay defined in workflow_settings.yaml: an
+// undefined var overrides the package's own default with `undefined`.
+const ga4DaysBack = Number(dataform.projectConfig.vars.ga4DaysBack);
+
 const {
   customEventParams,
   customUserProps,
@@ -25,7 +29,7 @@ module.exports = {
   enableIntraday: dataform.projectConfig.vars.ga4IncludeIntraday === "true",
 
   startDate: dataform.projectConfig.vars.ga4StartDate,
-  daysBack: Number(dataform.projectConfig.vars.ga4DaysBack),
+  daysBack: Number.isFinite(ga4DaysBack) ? ga4DaysBack : 3,
   timezone: dataform.projectConfig.vars.ga4Timezone,
   unwantedReferrals: dataform.projectConfig.vars.ga4UnwantedReferrals,
 

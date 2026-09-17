@@ -12,6 +12,9 @@
 // Keys that don't match a column in your model are ignored. Returns
 // { stagingEvents, events, items, sessions, users }.
 
+// The package validates descriptions here, so a compile error naming this file
+// is almost always a mistake in `columnDescriptions` in project_variables.js.
+
 const ga4 = require("@ken-e/dataform-ga4");
 
 module.exports = ga4.getColumnDescriptions(require("includes/ga4_config"));

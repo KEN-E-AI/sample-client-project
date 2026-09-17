@@ -103,6 +103,12 @@ groupings, column descriptions, etc.) live in `includes/project_variables.js` â€
 they ship empty and commented out. `includes/ga4_config.js` assembles them into
 the config that `definitions/ga4.js` passes to the package.
 
+**Don't need a source?** Delete its file in `definitions/` and remove the
+dependency from `package.json`. For GA4, also delete `includes/ga4_config.js`
+and `includes/ga4_docs.js` â€” Dataform loads every file in `includes/` on each
+compile, so leaving them behind fails the project with
+`Cannot find module '@ken-e/dataform-ga4'`.
+
 ### Column descriptions
 
 The GA4 package writes BigQuery column descriptions on every table it builds.
@@ -125,9 +131,6 @@ config {
 `includes/ga4_docs.js` passes `includes/ga4_config.js` to the package's
 `getColumnDescriptions`, so both describe the same columns. See the
 `@ken-e/dataform-ga4` README for the full rules.
-
-**Don't need a source?** Delete its file in `definitions/` and remove the
-dependency from `package.json`.
 
 ## Project layout
 

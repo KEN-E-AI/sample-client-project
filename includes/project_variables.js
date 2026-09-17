@@ -81,8 +81,8 @@ const customChannelGroupings = [
 // Adds or replaces the BigQuery column descriptions the package writes. Use it
 // to describe the custom fields above, which can't carry a description of their
 // own. Column names must match exactly. A string sets a column's description;
-// an object can set nested RECORD fields through `columns`, plus `tags` or
-// `bigqueryPolicyTags`.
+// an object can set nested RECORD fields through `columns`, plus `displayName`,
+// `tags` or `bigqueryPolicyTags`.
 const columnDescriptions = {
   // events: {
   //   view_item_event: "TRUE when the event is a view_item event.",

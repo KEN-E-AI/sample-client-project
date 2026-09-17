@@ -18,9 +18,9 @@ BigQuery project, account ID, and per-source identifiers.
 | @ken-e/dataform-youtube | 0.0.12 | definitions/youtube.js |
 | @ken-e/dataform-dv360 | 0.0.3 | definitions/dv360.js |
 
-Versions match the most recent live account at the time the template was
-refreshed. Re-run `/upgrade-package` from the propeller root after cloning
-if newer versions have shipped.
+These are the versions the template is tested against, not necessarily what a
+live account runs. Re-run `/upgrade-package` from the propeller root after
+cloning if newer versions have shipped.
 
 ## Customize for a new client
 
@@ -97,14 +97,21 @@ config {
 ```
 
 Keep the config in `includes/ga4_config.js` rather than inlining it in
-`definitions/ga4.js`: a definitions file can't be required by an includes file,
-and passing a different object to `getColumnDescriptions` would describe the
-wrong columns.
+`definitions/ga4.js`. Requiring a definitions file from an includes file re-runs
+it outside the definitions context, where `publish` and `declare` aren't
+available and its sources get declared twice, so `includes/` is where a shared
+config has to live. Passing `getColumnDescriptions` any other object would
+describe the wrong columns.
 
 ### 5. Remove unused packages
 
 If the client does not need a source, delete the corresponding file in
 `definitions/` and remove the dependency from `package.json`.
+
+Dropping GA4 also means deleting `includes/ga4_config.js` and
+`includes/ga4_docs.js`. Dataform loads every file in `includes/` on each
+compile, so leaving them behind fails the whole project with
+`Cannot find module '@ken-e/dataform-ga4'`.
 
 ### 6. Validate
 
