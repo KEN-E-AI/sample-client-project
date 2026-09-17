@@ -99,11 +99,38 @@ step-by-step guide lives in [`CLAUDE.md`](./CLAUDE.md); the essentials are:
 | `<DV360_ADVERTISER_ID>`, `<DV360_REPORT_PREFIX>` | `definitions/dv360.js` | Your DV360 advertiser/report identifiers |
 
 Per-client GA4 customizations (custom event params, conversions, channel
-groupings, etc.) live in `includes/project_variables.js` — they ship empty and
-commented out.
+groupings, column descriptions, etc.) live in `includes/project_variables.js` —
+they ship empty and commented out. `includes/ga4_config.js` assembles them into
+the config that `definitions/ga4.js` passes to the package.
 
 **Don't need a source?** Delete its file in `definitions/` and remove the
-dependency from `package.json`.
+dependency from `package.json`. For GA4, also delete `includes/ga4_config.js`
+and `includes/ga4_docs.js` — Dataform loads every file in `includes/` on each
+compile, so leaving them behind fails the project with
+`Cannot find module '@ken-e/dataform-ga4'`.
+
+### Column descriptions
+
+The GA4 package writes BigQuery column descriptions on every table it builds.
+Describe your own columns, or change a default, with `columnDescriptions` in
+`includes/project_variables.js`.
+
+To reuse those descriptions on models you build on top of the GA4 tables,
+spread `ga4_docs` into the model's `columns`:
+
+```sql
+config {
+  type: "view",
+  columns: {
+    ...ga4_docs.sessions,
+    session_intent: "Informational vs transactional, from landing page.",
+  },
+}
+```
+
+`includes/ga4_docs.js` passes `includes/ga4_config.js` to the package's
+`getColumnDescriptions`, so both describe the same columns. See the
+`@ken-e/dataform-ga4` README for the full rules.
 
 ## Project layout
 
@@ -112,6 +139,8 @@ definitions/            One file per data source — requires a package and conf
   ga4.js  google_ads.js  meta_ads.js  bing_ads.js  gsc.js  youtube.js  dv360.js
 includes/
   project_variables.js  Per-client GA4 customizations (custom params, conversions, ...)
+  ga4_config.js         The GA4 config, shared by definitions/ga4.js and ga4_docs.js
+  ga4_docs.js           The GA4 package's column descriptions, for your own models
 workflow_settings.yaml  Dataform project settings, BigQuery datasets, shared vars
 package.json            Pinned @ken-e/* package versions
 .npmrc                  Points the @ken-e scope at npm and reads DATAFORM_NPM_TOKEN
@@ -122,7 +151,7 @@ CLAUDE.md               Detailed customization guide
 
 | Package | Version |
 |---|---|
-| `@ken-e/dataform-ga4` | 0.0.16 |
+| `@ken-e/dataform-ga4` | 0.0.20 |
 | `@ken-e/dataform-google-ads` | 0.0.20 |
 | `@ken-e/dataform-meta-ads` | 0.0.22 |
 | `@ken-e/dataform-bing-ads` | 0.0.13 |

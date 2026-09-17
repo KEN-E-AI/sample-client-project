@@ -10,7 +10,7 @@ BigQuery project, account ID, and per-source identifiers.
 
 | Package | Version | Definition file |
 |---------|---------|----------------|
-| @ken-e/dataform-ga4 | 0.0.16 | definitions/ga4.js |
+| @ken-e/dataform-ga4 | 0.0.20 | definitions/ga4.js |
 | @ken-e/dataform-google-ads | 0.0.20 | definitions/google_ads.js |
 | @ken-e/dataform-meta-ads | 0.0.22 | definitions/meta_ads.js |
 | @ken-e/dataform-bing-ads | 0.0.13 | definitions/bing_ads.js |
@@ -18,9 +18,9 @@ BigQuery project, account ID, and per-source identifiers.
 | @ken-e/dataform-youtube | 0.0.12 | definitions/youtube.js |
 | @ken-e/dataform-dv360 | 0.0.3 | definitions/dv360.js |
 
-Versions match the most recent live account at the time the template was
-refreshed. Re-run `/upgrade-package` from the propeller root after cloning
-if newer versions have shipped.
+These are the versions the template is tested against, not necessarily what a
+live account runs. Re-run `/upgrade-package` from the propeller root after
+cloning if newer versions have shipped.
 
 ## Customize for a new client
 
@@ -79,11 +79,39 @@ arrays ship empty/commented. Uncomment and adapt:
 - `customSessionFieldsFromEvents` / `customSessionFieldsFromSessions` —
   session-level aggregations (the package splits these by whether the
   expression references event-level or session-level columns)
+- `columnDescriptions` — BigQuery column descriptions to add or replace on the
+  package's tables, keyed by table (`stagingEvents`, `events`, `items`,
+  `sessions`, `users`). Custom SQL fields can't carry a description, so this is
+  where you describe them
+
+`includes/ga4_config.js` assembles those variables into the GA4 config.
+`definitions/ga4.js` passes it to the package, and `includes/ga4_docs.js` passes
+the same object to `ga4.getColumnDescriptions()`, so models you build on the GA4
+tables can reuse the descriptions:
+
+```sql
+config {
+  type: "view",
+  columns: { ...ga4_docs.sessions, session_intent: "..." },
+}
+```
+
+Keep the config in `includes/ga4_config.js` rather than inlining it in
+`definitions/ga4.js`. Requiring a definitions file from an includes file re-runs
+it outside the definitions context, where `publish` and `declare` aren't
+available and its sources get declared twice, so `includes/` is where a shared
+config has to live. Passing `getColumnDescriptions` any other object would
+describe the wrong columns.
 
 ### 5. Remove unused packages
 
 If the client does not need a source, delete the corresponding file in
 `definitions/` and remove the dependency from `package.json`.
+
+Dropping GA4 also means deleting `includes/ga4_config.js` and
+`includes/ga4_docs.js`. Dataform loads every file in `includes/` on each
+compile, so leaving them behind fails the whole project with
+`Cannot find module '@ken-e/dataform-ga4'`.
 
 ### 6. Validate
 
