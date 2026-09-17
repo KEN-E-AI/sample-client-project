@@ -77,6 +77,25 @@ const customChannelGroupings = [
   // },
 ];
 
+// GA4 column descriptions
+// Adds or replaces the BigQuery column descriptions the package writes. Use it
+// to describe the custom fields above, which can't carry a description of their
+// own. Column names must match exactly. A string sets a column's description;
+// an object can set nested RECORD fields through `columns`, plus `tags` or
+// `bigqueryPolicyTags`.
+const columnDescriptions = {
+  // events: {
+  //   view_item_event: "TRUE when the event is a view_item event.",
+  // },
+  // sessions: {
+  //   landed_on_blog: "TRUE when the landing page is a blog page.",
+  //   geo: { columns: { city: "City of the session's first event." } },
+  // },
+  // users: {
+  //   user_id: { bigqueryPolicyTags: ["projects/.../policyTags/..."] },
+  // },
+};
+
 module.exports = {
   customEventParams,
   customUserProps,
@@ -88,4 +107,5 @@ module.exports = {
   customSessionFieldsFromSessions,
   customEventFields,
   customChannelGroupings,
+  columnDescriptions,
 };

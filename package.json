@@ -2,7 +2,7 @@
   "name": "propeller-sample-client-project",
   "dependencies": {
     "@dataform/core": "3.0.35",
-    "@ken-e/dataform-ga4": "0.0.16",
+    "@ken-e/dataform-ga4": "0.0.20",
     "@ken-e/dataform-google-ads": "0.0.20",
     "@ken-e/dataform-meta-ads": "0.0.22",
     "@ken-e/dataform-bing-ads": "0.0.13",

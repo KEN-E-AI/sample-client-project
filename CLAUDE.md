@@ -10,7 +10,7 @@ BigQuery project, account ID, and per-source identifiers.
 
 | Package | Version | Definition file |
 |---------|---------|----------------|
-| @ken-e/dataform-ga4 | 0.0.16 | definitions/ga4.js |
+| @ken-e/dataform-ga4 | 0.0.20 | definitions/ga4.js |
 | @ken-e/dataform-google-ads | 0.0.20 | definitions/google_ads.js |
 | @ken-e/dataform-meta-ads | 0.0.22 | definitions/meta_ads.js |
 | @ken-e/dataform-bing-ads | 0.0.13 | definitions/bing_ads.js |
@@ -79,6 +79,27 @@ arrays ship empty/commented. Uncomment and adapt:
 - `customSessionFieldsFromEvents` / `customSessionFieldsFromSessions` —
   session-level aggregations (the package splits these by whether the
   expression references event-level or session-level columns)
+- `columnDescriptions` — BigQuery column descriptions to add or replace on the
+  package's tables, keyed by table (`stagingEvents`, `events`, `items`,
+  `sessions`, `users`). Custom SQL fields can't carry a description, so this is
+  where you describe them
+
+`includes/ga4_config.js` assembles those variables into the GA4 config.
+`definitions/ga4.js` passes it to the package, and `includes/ga4_docs.js` passes
+the same object to `ga4.getColumnDescriptions()`, so models you build on the GA4
+tables can reuse the descriptions:
+
+```sql
+config {
+  type: "view",
+  columns: { ...ga4_docs.sessions, session_intent: "..." },
+}
+```
+
+Keep the config in `includes/ga4_config.js` rather than inlining it in
+`definitions/ga4.js`: a definitions file can't be required by an includes file,
+and passing a different object to `getColumnDescriptions` would describe the
+wrong columns.
 
 ### 5. Remove unused packages
 
